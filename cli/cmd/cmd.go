@@ -40,6 +40,10 @@ func CmdInit() *baseCommand {
 	createCommand := &CreateCommand{}
 	baseCmd.AddCommand(createCommand)
 
+	// add verify command
+	verifyCommand := &VerifyCommand{}
+	baseCmd.AddCommand(verifyCommand)
+
 	// add destroy command
 	destroyCommand := &DestroyCommand{}
 	baseCmd.AddCommand(destroyCommand)

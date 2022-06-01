@@ -46,19 +46,22 @@ func (e *Executor) Exec(uid string, ctx context.Context, model *spec.ExpModel) *
 		return sshExecutor.Exec(uid, ctx, model)
 	}
 
-	var mode string 
+	var mode string
 	var argsArray []string
-	
-	_, isDestroy := spec.IsDestroy(ctx)
-	if isDestroy {
+	var isDestroy bool
+	var isVerify bool
+
+	if _, isDestroy = spec.IsDestroy(ctx); isDestroy {
 		mode = spec.Destroy
+	} else if _, isVerify = spec.IsVerify(ctx); isVerify {
+		mode = spec.Verify
 	} else {
 		mode = spec.Create
 	}
 
 	argsArray = append(argsArray, mode, model.Target, model.ActionName, fmt.Sprintf("--uid=%s", uid))
 	for k, v := range model.ActionFlags {
-		if v == "" ||  k == "timeout" {
+		if v == "" || k == "timeout" {
 			continue
 		}
 		argsArray = append(argsArray, fmt.Sprintf("--%s=%s", k, v))
@@ -68,7 +71,7 @@ func (e *Executor) Exec(uid string, ctx context.Context, model *spec.ExpModel) *
 	command := os_exec.CommandContext(ctx, chaosOsBin, argsArray...)
 	log.Debugf(ctx, "run command, %s %v", chaosOsBin, argsArray)
 
-	if model.ActionProcessHang && !isDestroy {
+	if model.ActionProcessHang && !isDestroy && !isVerify{
 		if err := command.Start(); err != nil {
 			sprintf := fmt.Sprintf("create experiment command start failed, %v", err)
 			return spec.ReturnFail(spec.OsCmdExecFailed, sprintf)
